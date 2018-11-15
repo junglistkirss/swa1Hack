@@ -14,11 +14,12 @@ BTN = Pin(13)
 
 
 def button_falling(p):
-    pass
+    print("falling %s" % p)
 
 
 def button_rising(p):
-    pass
+    print("rising %s" % p)
+
 
 BTN.irq(trigger=Pin.IRQ_FALLING, handler=button_falling)
 BTN.irq(trigger=Pin.IRQ_RISING, handler=button_rising)
