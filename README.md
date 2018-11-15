@@ -6,6 +6,7 @@ http://docs.micropython.org/en/v1.9.2/esp8266/index.html
 https://hackaday.io/project/21243/instructions
 https://majenko.co.uk/blog/hacking-swa1-smart-wifi-power-switch
 https://github.com/espressif/esptool/
+https://learn.adafruit.com/micropython-basics-load-files-and-run-code/overview
 
 # Branchements
 
