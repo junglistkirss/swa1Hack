@@ -1,12 +1,13 @@
 # config keys :
 #   - essid
 #   - password
-import esp
 import ujson
+from machine import unique_id
+from ubinascii import hexlify
 
 
 def get_machine_guid():
-    return esp.flash_id()
+    return hexlify(unique_id())
 
 
 def read_json(filename):
