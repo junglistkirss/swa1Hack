@@ -29,6 +29,8 @@ pip install esptool
 
 esptool.py --port COM35 --baud 460800 erase_flash
 esptool.py --port COM35 --baud 460800 write_flash --flash_mode dout --flash_size 2MB 0 .\esp8266-20181116-v1.9.4-684-g51482ba92.bin
+ou
+esptool.py --port COM35 --baud 460800 write_flash --flash_mode dout --flash_size detect 0 .\esp8266-20181116-v1.9.4-684-g51482ba92.bin
 
 # WEB Repl
 import webrepl_setup
