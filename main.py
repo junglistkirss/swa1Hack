@@ -6,7 +6,7 @@ from pinout import PWM_LED, BLUE, RELAY, BTN, EventHandler
 # from utils import read_json, write_json, get_machine_guid
 from wifi import do_connect
 from wifi import STA, AP
-
+from ubinascii import hexlify
 from uServerBase import uWebServer
 
 blue_led = PWM_LED(BLUE, 4)
@@ -27,15 +27,18 @@ else:
 blue_led.stop()
 
 
+def _reset_credentials(t):
+    STA.connect('', '')
+    STA.disconnect()
+    machine.reset()
+
+
 def click(d):
     if d > 5000:
+        machine.reset()
+    elif d > 10000:
         reboot = Timer(-1)
-
-        def RESET(t):
-            STA.connect('', '')
-            STA.disconnect()
-            machine.reset()
-        reboot.init(period=2000, mode=Timer.ONE_SHOT, callback=RESET)
+        reboot.init(period=2000, mode=Timer.ONE_SHOT, callback=_reset_credentials)
     else:
         if RELAY.value() == 0:
             RELAY.on()
@@ -48,17 +51,35 @@ BTN__OnClick = EventHandler(BTN)
 BTN__OnClick.add(click)
 
 
+def _handle_reset(httpClient, httpResponse):
+    httpResponse.WriteResponseJSONOk(headers=None, obj={'reset': True})
+    machine.reset()
+
+
+def _handle_reset_credentials(httpClient, httpResponse):
+    httpResponse.WriteResponseJSONOk(headers=None, obj={'_reset_credentials': True})
+    reboot = Timer(-1)
+    reboot.init(period=2000, mode=Timer.ONE_SHOT, callback=_reset_credentials)
+
+
 def _handle_wifiscan(httpClient, httpResponse):
-    result = STA.scan()
+    result = [{'ssid': ssid, 'bssid': hexlify(bssid), 'channel': channel, 'RSSI': RSSI, 'authmode': authmode, 'hidden': hidden} for (ssid, bssid, channel, RSSI, authmode, hidden) in STA.scan()]
     httpResponse.WriteResponseJSONOk(headers=None, obj=result)
+
+
+def _parse_ifconfig(ip, subnet, gateway, dns):
+    return {'ip': ip, 'subnet': subnet, 'gateway': gateway, 'dns': dns}
 
 
 def _handle_ifconfig(httpClient, httpResponse):
-    result = {'AccessPoint': AP.ifconfig(), 'StationAccess': STA.ifconfig()}
+    ap_ip, ap_subnet, ap_gateway, ap_dns = AP.ifconfig()
+    sta_ip, sta_subnet, sta_gateway, sta_dns = STA.ifconfig()
+    result = {'AP': _parse_ifconfig(ap_ip, ap_subnet, ap_gateway, ap_dns),
+              'STA': _parse_ifconfig(sta_ip, sta_subnet, sta_gateway, sta_dns)}
     httpResponse.WriteResponseJSONOk(headers=None, obj=result)
 
 
-def _handle_status(httpClient, httpResponse, routeArgs=None):
+def _handle_relay_status(httpClient, httpResponse, routeArgs=None):
     if routeArgs is not None:
         try:
             st = routeArgs['status']
@@ -128,11 +149,17 @@ def _handle_post_wifi(httpClient, httpResponse):
 
 mws = uWebServer(routeHandlers=[
                  # JSON responses
-                 ('/set/<status>', 'GET', _handle_status),
-                 ('/set', 'GET', _handle_status),
-                 ('/get', 'GET', _handle_status),
+                 ('/set/<status>', 'GET', _handle_relay_status),
+                 ('/set', 'GET', _handle_relay_status),
+                 ('/get', 'GET', _handle_relay_status),
                  ('/scan', 'GET', _handle_wifiscan),
                  ('/ifconfig', 'GET', _handle_ifconfig),
+                 ('/reset', 'GET', _handle_reset),
+                 ('/reset_credentials', 'GET', _handle_reset_credentials),
+                 # ('/reset_credentials', 'GET', _handle_reset_credentials),
+                 # ('/ap_state', 'GET', _handle_ifconfig),
+                 # ('/ap_enable', 'GET', _handle_ifconfig),
+                 # ('/ap_disable', 'GET', _handle_ifconfig),
                  # HTMH responses
                  ('/wifi', 'GET', _handle_get_wifi),
                  ('/wifi', 'POST', _handle_post_wifi),
