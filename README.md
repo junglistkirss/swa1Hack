@@ -28,7 +28,7 @@ esptool est requis pour flasher la carte (ici un ESP8266EX)
 pip install esptool
 
 esptool.py --port COM35 --baud 460800 erase_flash
-esptool.py --port COM35 --baud 460800 write_flash --flash_size=detect 0 .\esp8266-512k-20180718-v1.9.4-272-g46091b8a.bin
+esptool.py --port COM35 --baud 460800 write_flash --flash_mode dout --flash_size 2MB 0 .\esp8266-20181116-v1.9.4-684-g51482ba92.bin
 
 # WEB Repl
 import webrepl_setup
